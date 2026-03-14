@@ -49,12 +49,18 @@ const BookingForm = () => {
       });
       
       const data = await response.json();
-      // Use the ID from response if available, otherwise use generated
-      setBookingNumber(data.id || generatedId);
-      setStep(2);
+      
+      if (data.success === true) {
+        // Use the exact booking number returned by n8n
+        setBookingNumber(data.booking_number || generatedId);
+        setStep(2);
+      } else {
+        // Handle case where webhook returned successfully but success=false
+        alert(data.message || 'Failed to submit booking. Please try again.');
+      }
     } catch (error) {
       console.error(error);
-      alert('Failed to submit booking.');
+      alert('Network error: Failed to connect to the booking system.');
     } finally {
       setIsLoading(false);
     }
