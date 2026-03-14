@@ -1,0 +1,7 @@
+{
+  "name": "Best Ice Cream | Ice Cream Truck Booking",
+  "description": "Book Chicago’s best ice-cream truck for birthdays, school events, corporate events, and neighborhood parties. Chat with us instantly or reserve your event online.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
