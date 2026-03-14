@@ -32,8 +32,13 @@ async function startServer() {
       });
       const data = await response.json();
       res.json(data);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to connect to chat service" });
+    } catch (error: any) {
+      console.error("Chat webhook error:", error);
+      res.status(500).json({ 
+        error: "Failed to connect to chat service",
+        message: error.message,
+        stack: error.stack
+      });
     }
   });
 
