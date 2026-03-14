@@ -42,7 +42,7 @@ const BookingForm = () => {
     };
 
     try {
-      const response = await fetch('/api/booking', {
+      const response = await fetch('https://home.tiffany-major.ts.net/webhook/booking', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(bookingPayload)
