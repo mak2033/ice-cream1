@@ -38,7 +38,10 @@ const MenuPage = () => {
         const rawItems = Array.isArray(responseData) ? responseData : (responseData.data || []);
         console.log('Raw n8n data:', rawItems);
         
-        const parsedItems: MenuItem[] = rawItems.map((row: any) => {
+        const parsedItems: MenuItem[] = rawItems.map((row: any, index: number) => {
+          // Skip the first row if it's clearly the header row itself (often happens with custom headers in n8n)
+          if (row['col_2'] === 'Product Name' || row['col_3'] === 'Price (USD)') return null;
+
           // Normalize keys to lowercase and trimmed for easier matching
           const normalizedRow: any = {};
           if (row && typeof row === 'object') {
@@ -57,22 +60,29 @@ const MenuPage = () => {
             return '';
           };
           
-          const rawPrice = String(getVal(['price', 'Price', 'PRICE']));
+          // Use exact exact columns from the n8n test, falling back to name searches
+          // 🍦 Chicago Ice Cream Truck — Menu & Prices -> ID (#)
+          // col_2 -> Product Name
+          // col_3 -> Price (USD)
+          // col_4 -> Ingredients (Description)
+          // col_5 -> Image URL
+          
+          const rawPrice = String(row['col_3'] || getVal(['price', 'price (usd)', 'col_3']));
           const cleanPrice = rawPrice.replace(/[$\s,]/g, '').trim();
 
-          const rawAvailable = String(getVal(['available', 'Available', 'AVAILABLE', 'In Stock'])).toLowerCase().trim();
-          const isAvailable = rawAvailable === 'yes' || rawAvailable === 'true' || rawAvailable === '1' || rawAvailable === '';
+          const rawAvailable = String(row['available'] || getVal(['available', 'in stock'])).toLowerCase().trim();
+          const isAvailable = rawAvailable === 'yes' || rawAvailable === 'true' || rawAvailable === '1' || rawAvailable === '' || rawAvailable === 'undefined';
 
           return {
-            id: String(getVal(['id', 'ID', 'Id'])).trim(),
-            category: String(getVal(['category', 'Category', 'CATEGORY'])).trim(),
-            name: String(getVal(['name', 'Name', 'NAME'])).trim(),
-            description: String(getVal(['description', 'Description', 'DESCRIPTION'])).trim(),
+            id: String(row['🍦 Chicago Ice Cream Truck — Menu & Prices'] || getVal(['#', 'id', 'col_1'])).trim() || `item-${index}`,
+            category: String(row['category'] || getVal(['category'])).trim() || 'All Treats',
+            name: String(row['col_2'] || getVal(['product name', 'name', 'col_2'])).trim(),
+            description: String(row['col_4'] || getVal(['ingredients', 'description', 'col_4'])).trim(),
             price: cleanPrice,
-            url: String(getVal(['url', 'URL', 'Url', 'Image', 'image', 'img'])).trim(),
+            url: String(row['col_5'] || getVal(['image url', 'url', 'image', 'col_5'])).trim(),
             available: isAvailable
           };
-        }).filter(item => item.name && item.name !== 'name' && item.name !== 'Name'); // filter empties
+        }).filter((item: any) => item && item.name && item.name !== 'Product Name'); // filter empties and headers
         
         console.log('Parsed items:', parsedItems);
         setItems(parsedItems);
