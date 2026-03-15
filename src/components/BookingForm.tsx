@@ -59,13 +59,17 @@ const BookingForm = () => {
         console.warn("Failed to parse JSON response:", responseText);
       }
       
-      if (data.success === true) {
+      // DEBUG: Show exactly what n8n sent to the frontend
+      console.log("RAW n8n RESPONSE:", responseText);
+      console.log("PARSED n8n DATA:", data);
+      
+      if (data.success === true || data.success === "true") {
         // Use the exact booking number returned by n8n
         setBookingNumber(data.booking_number || generatedId);
         setStep(2);
       } else {
-        // Handle case where webhook returned successfully but success=false
-        alert(data.message || responseText || 'Failed to submit booking. Please try again.');
+        // Show the exact raw text output from n8n for debugging
+        alert(`n8n sent back: ${responseText || 'Empty Response'}`);
       }
     } catch (error: any) {
       console.error(error);
