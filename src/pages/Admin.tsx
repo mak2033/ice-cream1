@@ -20,6 +20,41 @@ const Admin = () => {
     }
   }, [isLoggedIn]);
 
+  const handleStatusChange = async (bookingId: string, newStatus: string) => {
+    setIsLoading(true);
+    try {
+      // Optimistically update the UI
+      setBookings(prev => 
+        prev.map(b => b.id === bookingId ? { ...b, status: newStatus as any } : b)
+      );
+
+      // Webhook to update Google Sheets 
+      const updateWebhookUrl = 'https://home.tiffany-major.ts.net/webhook/update-booking-status';
+      await fetch(updateWebhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: bookingId,
+          status: newStatus
+        })
+      });
+      
+      // If deleted, refresh the list completely to remove it from view
+      if (newStatus === 'Delete') {
+         setTimeout(fetchBookings, 500); 
+      }
+      
+    } catch (err) {
+      console.error('Failed to update status:', err);
+      // Revert if absolute failure, but normally n8n just processes it silently
+      fetchBookings();
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -300,7 +335,20 @@ const Admin = () => {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
-                          <button className="text-xs font-bold text-slate-400 hover:text-slate-900">Edit</button>
+                          <select
+                            value=""
+                            onChange={(e) => {
+                              if (e.target.value) handleStatusChange(booking.id, e.target.value);
+                            }}
+                            className="text-xs font-bold text-slate-500 hover:text-slate-900 bg-transparent outline-none cursor-pointer border border-slate-200 rounded px-2 py-1 appearance-none"
+                            style={{ backgroundImage: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>')`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 4px center', paddingRight: '20px' }}
+                          >
+                            <option value="" disabled hidden>Action</option>
+                            <option value="Confirmed">Mark Confirmed</option>
+                            <option value="Pending">Mark Pending</option>
+                            <option value="Cancelled">Mark Cancelled</option>
+                            <option value="Delete" className="text-red-500">Delete</option>
+                          </select>
                         </div>
                       </td>
                     </tr>
