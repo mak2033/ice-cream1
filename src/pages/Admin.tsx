@@ -239,49 +239,73 @@ const Admin = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {bookings.map((booking) => (
-                  <tr key={booking.id} className="hover:bg-slate-50 transition-all">
-                    <td className="px-6 py-4">
-                      <div className="text-xs font-mono text-slate-400">#{booking.id}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="font-bold text-slate-900 text-sm">{booking.name}</div>
-                    </td>
-                    <td className="px-6 py-4 text-xs text-slate-500">
-                      {booking.email !== 'N/A' && booking.email}
-                    </td>
-                    <td className="px-6 py-4 text-xs text-slate-500 whitespace-nowrap">
-                      {booking.phone !== 'N/A' && booking.phone}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-slate-700 font-medium whitespace-nowrap">{booking.date} @ {booking.time}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-xs text-slate-700 truncate max-w-[200px]" title={booking.address}>{booking.address}</div>
-                      {booking.googleMapsUrl && (
-                        <a href={booking.googleMapsUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-blue-500 hover:underline mt-1 inline-block">
-                          <ExternalLink size={10} className="inline mr-1 -mt-0.5" />
-                          Maps
-                        </a>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-slate-600 font-medium">{booking.guests}</td>
-                    <td className="px-6 py-4">
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                        String(booking.status || '').toLowerCase() === 'confirmed' ? 'bg-emerald-100 text-emerald-600' :
-                        String(booking.status || '').toLowerCase() === 'cancelled' ? 'bg-red-100 text-red-600' :
-                        'bg-amber-100 text-amber-600'
-                      }`}>
-                        {booking.status || 'Pending'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <button className="text-xs font-bold text-slate-400 hover:text-slate-900">Edit</button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {bookings.map((booking) => {
+                  // Determine if event is in the past
+                  let isPastEvent = false;
+                  try {
+                    if (booking.date !== 'N/A') {
+                      // Attempt to parse "YYYY-MM-DD" or similar and compare to now
+                      const eventDateTime = new Date(`${booking.date}T${booking.time !== 'N/A' ? booking.time : '00:00:00'}`);
+                      if (!isNaN(eventDateTime.getTime()) && eventDateTime < new Date()) {
+                        isPastEvent = true;
+                      }
+                    }
+                  } catch (e) {
+                    // Ignore invalid dates
+                  }
+
+                  return (
+                    <tr key={booking.id} className="hover:bg-slate-50 transition-all">
+                      <td className="px-6 py-4">
+                        <div className="text-xs font-mono text-slate-400">#{booking.id}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="font-bold text-slate-900 text-sm">{booking.name}</div>
+                      </td>
+                      <td className="px-6 py-4 text-xs text-slate-500">
+                        {booking.email !== 'N/A' && booking.email}
+                      </td>
+                      <td className="px-6 py-4 text-xs text-slate-500 whitespace-nowrap">
+                        {booking.phone !== 'N/A' && booking.phone}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className={`text-sm font-medium whitespace-nowrap ${isPastEvent ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
+                          {booking.date} @ {booking.time}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-xs text-slate-700 truncate max-w-[200px]" title={booking.address}>{booking.address}</div>
+                        {booking.googleMapsUrl && (
+                          <a href={booking.googleMapsUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-blue-500 hover:underline mt-1 inline-block">
+                            <ExternalLink size={10} className="inline mr-1 -mt-0.5" />
+                            Maps
+                          </a>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600 font-medium">{booking.guests}</td>
+                      <td className="px-6 py-4">
+                        {isPastEvent ? (
+                          <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-500">
+                            Ended ({booking.date})
+                          </span>
+                        ) : (
+                          <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                            String(booking.status || '').toLowerCase() === 'confirmed' ? 'bg-emerald-100 text-emerald-600' :
+                            String(booking.status || '').toLowerCase() === 'cancelled' ? 'bg-red-100 text-red-600' :
+                            'bg-amber-100 text-amber-600'
+                          }`}>
+                            {booking.status || 'Pending'}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <button className="text-xs font-bold text-slate-400 hover:text-slate-900">Edit</button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
             {bookings.length === 0 && !isLoading && (
