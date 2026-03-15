@@ -3,7 +3,17 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Send, User, Bot, Loader2 } from 'lucide-react';
 import { ChatMessage } from '@/src/types';
 
+import { v4 as uuidv4 } from 'uuid';
+
 const Chatbot = () => {
+  const [sessionId] = useState(() => {
+    const savedId = localStorage.getItem('sweetbot_session');
+    if (savedId) return savedId;
+    const newId = uuidv4();
+    localStorage.setItem('sweetbot_session', newId);
+    return newId;
+  });
+  
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
     const saved = localStorage.getItem('sweetbot_history');
     return saved ? JSON.parse(saved) : [
@@ -39,7 +49,7 @@ const Chatbot = () => {
       const response = await fetch('https://home.tiffany-major.ts.net/webhook/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: input })
+        body: JSON.stringify({ message: input, sessionId })
       });
       
       const responseText = await response.text();
