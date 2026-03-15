@@ -26,71 +26,60 @@ const MenuPage = () => {
         setIsLoading(true);
         setError(null);
         
-        // Google Sheets CSV export URL
-        const sheetUrl = 'https://docs.google.com/spreadsheets/d/1Vjly0TePWjYXbztVzgO8qkaYUR3pK-C6333cM87ete4/export?format=csv&gid=546663314';
+        // Securely fetch menu data via n8n webhook
+        const menuUrl = 'https://home.tiffany-major.ts.net/webhook/menu';
         
-        const response = await fetch(sheetUrl);
+        const response = await fetch(menuUrl);
         if (!response.ok) throw new Error('Failed to fetch menu data');
         
-        const csvText = await response.text();
+        const responseData = await response.json();
         
-        Papa.parse(csvText, {
-          header: true,
-          skipEmptyLines: true,
-          complete: (results) => {
-            console.log('Raw CSV data:', results.data);
-            
-            const parsedItems: MenuItem[] = results.data.map((row: any) => {
-              // Normalize keys to lowercase and trimmed for easier matching
-              const normalizedRow: any = {};
-              Object.keys(row).forEach(key => {
-                normalizedRow[key.toLowerCase().trim()] = row[key];
-              });
-
-              const getVal = (names: string[], index: number) => {
-                // Try normalized names first
-                for (const name of names) {
-                  const n = name.toLowerCase().trim();
-                  if (normalizedRow[n] !== undefined && normalizedRow[n] !== null) {
-                    return normalizedRow[n];
-                  }
-                }
-                // Fallback to index-based if we can't find by name
-                // Note: Object.values order is generally reliable for CSV rows in PapaParse
-                const values = Object.values(row);
-                return values[index] !== undefined ? values[index] : '';
-              };
-
-              const rawPrice = String(getVal(['price', 'Price', 'PRICE'], 4));
-              const cleanPrice = rawPrice.replace(/[$\s,]/g, '').trim();
-
-              const rawAvailable = String(getVal(['available', 'Available', 'AVAILABLE', 'In Stock'], 6)).toLowerCase().trim();
-              const isAvailable = rawAvailable === 'yes' || rawAvailable === 'true' || rawAvailable === '1' || rawAvailable === '';
-
-              return {
-                id: String(getVal(['id', 'ID', 'Id'], 0)).trim(),
-                category: String(getVal(['category', 'Category', 'CATEGORY'], 1)).trim(),
-                name: String(getVal(['name', 'Name', 'NAME'], 2)).trim(),
-                description: String(getVal(['description', 'Description', 'DESCRIPTION'], 3)).trim(),
-                price: cleanPrice,
-                url: String(getVal(['url', 'URL', 'Url', 'Image', 'image', 'img'], 5)).trim(),
-                available: isAvailable
-              };
-            }).filter(item => item.name && item.name !== 'name' && item.name !== 'Name'); // Filter out header row if it was misparsed as data
-            
-            console.log('Parsed items:', parsedItems);
-            setItems(parsedItems);
-            setIsLoading(false);
-          },
-          error: (err: any) => {
-            console.error('PapaParse error:', err);
-            setError('Failed to parse menu data');
-            setIsLoading(false);
+        // n8n Google Sheets node usually returns an array of objects
+        const rawItems = Array.isArray(responseData) ? responseData : (responseData.data || []);
+        console.log('Raw n8n data:', rawItems);
+        
+        const parsedItems: MenuItem[] = rawItems.map((row: any) => {
+          // Normalize keys to lowercase and trimmed for easier matching
+          const normalizedRow: any = {};
+          if (row && typeof row === 'object') {
+            Object.keys(row).forEach(key => {
+              normalizedRow[key.toLowerCase().trim()] = row[key];
+            });
           }
-        });
+
+          const getVal = (names: string[]) => {
+            for (const name of names) {
+              const n = name.toLowerCase().trim();
+              if (normalizedRow[n] !== undefined && normalizedRow[n] !== null) {
+                return normalizedRow[n];
+              }
+            }
+            return '';
+          };
+          
+          const rawPrice = String(getVal(['price', 'Price', 'PRICE']));
+          const cleanPrice = rawPrice.replace(/[$\s,]/g, '').trim();
+
+          const rawAvailable = String(getVal(['available', 'Available', 'AVAILABLE', 'In Stock'])).toLowerCase().trim();
+          const isAvailable = rawAvailable === 'yes' || rawAvailable === 'true' || rawAvailable === '1' || rawAvailable === '';
+
+          return {
+            id: String(getVal(['id', 'ID', 'Id'])).trim(),
+            category: String(getVal(['category', 'Category', 'CATEGORY'])).trim(),
+            name: String(getVal(['name', 'Name', 'NAME'])).trim(),
+            description: String(getVal(['description', 'Description', 'DESCRIPTION'])).trim(),
+            price: cleanPrice,
+            url: String(getVal(['url', 'URL', 'Url', 'Image', 'image', 'img'])).trim(),
+            available: isAvailable
+          };
+        }).filter(item => item.name && item.name !== 'name' && item.name !== 'Name'); // filter empties
+        
+        console.log('Parsed items:', parsedItems);
+        setItems(parsedItems);
+        setIsLoading(false);
       } catch (err) {
         console.error('Failed to fetch menu:', err);
-        setError('Failed to load menu. Please check your connection.');
+        setError('Failed to load menu. Please check your connection or ensure the n8n webhook is active.');
         setIsLoading(false);
       }
     };
