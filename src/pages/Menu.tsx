@@ -38,17 +38,20 @@ const MenuPage = () => {
         const rawItems = Array.isArray(responseData) ? responseData : (responseData.data || []);
         console.log('Raw n8n data:', rawItems);
         
-        const parsedItems: MenuItem[] = rawItems.map((row: any, index: number) => {
+        let currentCategory = 'All Treats';
+        const parsedItems: MenuItem[] = [];
+        
+        rawItems.forEach((row: any, index: number) => {
+          if (!row || typeof row !== 'object') return;
+          
           // Skip the first row if it's clearly the header row itself (often happens with custom headers in n8n)
-          if (row['col_2'] === 'Product Name' || row['col_3'] === 'Price (USD)') return null;
+          if (row['col_2'] === 'Product Name' || row['col_3'] === 'Price (USD)') return;
 
           // Normalize keys to lowercase and trimmed for easier matching
           const normalizedRow: any = {};
-          if (row && typeof row === 'object') {
-            Object.keys(row).forEach(key => {
-              normalizedRow[key.toLowerCase().trim()] = row[key];
-            });
-          }
+          Object.keys(row).forEach(key => {
+            normalizedRow[key.toLowerCase().trim()] = row[key];
+          });
 
           const getVal = (names: string[]) => {
             for (const name of names) {
@@ -67,22 +70,37 @@ const MenuPage = () => {
           // col_4 -> Ingredients (Description)
           // col_5 -> Image URL
           
-          const rawPrice = String(row['col_3'] || getVal(['price', 'price (usd)', 'col_3']));
+          const firstColRaw = row['🍦 Chicago Ice Cream Truck — Menu & Prices'] || getVal(['#', 'id', 'col_1']);
+          const nameRaw = row['col_2'] || getVal(['product name', 'name', 'col_2']);
+          const priceRaw = row['col_3'] || getVal(['price', 'price (usd)', 'col_3']);
+          
+          const firstColStr = String(firstColRaw).trim();
+          const nameStr = String(nameRaw).trim();
+          
+          // Detect Category Row: The first column has text, but the name and price columns are completely empty
+          if (firstColStr && firstColStr !== "Total: 24 products" && !nameStr && !priceRaw) {
+            currentCategory = firstColStr;
+            return;
+          }
+          
+          if (!nameStr || nameStr === 'Product Name') return; // Skip empty rows and stray headers
+          
+          const rawPrice = String(priceRaw);
           const cleanPrice = rawPrice.replace(/[$\s,]/g, '').trim();
 
           const rawAvailable = String(row['available'] || getVal(['available', 'in stock'])).toLowerCase().trim();
           const isAvailable = rawAvailable === 'yes' || rawAvailable === 'true' || rawAvailable === '1' || rawAvailable === '' || rawAvailable === 'undefined';
 
-          return {
-            id: String(row['🍦 Chicago Ice Cream Truck — Menu & Prices'] || getVal(['#', 'id', 'col_1'])).trim() || `item-${index}`,
-            category: String(row['category'] || getVal(['category'])).trim() || 'All Treats',
-            name: String(row['col_2'] || getVal(['product name', 'name', 'col_2'])).trim(),
+          parsedItems.push({
+            id: firstColStr || `item-${index}`,
+            category: currentCategory,
+            name: nameStr,
             description: String(row['col_4'] || getVal(['ingredients', 'description', 'col_4'])).trim(),
             price: cleanPrice,
             url: String(row['col_5'] || getVal(['image url', 'url', 'image', 'col_5'])).trim(),
             available: isAvailable
-          };
-        }).filter((item: any) => item && item.name && item.name !== 'Product Name'); // filter empties and headers
+          });
+        });
         
         console.log('Parsed items:', parsedItems);
         setItems(parsedItems);
