@@ -227,9 +227,12 @@ const Admin = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200">
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">ID / Created</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Customer Contact</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Event Info</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">ID</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Name</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Email</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Phone</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Event Details</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Location</th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Guests</th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
@@ -240,20 +243,25 @@ const Admin = () => {
                   <tr key={booking.id} className="hover:bg-slate-50 transition-all">
                     <td className="px-6 py-4">
                       <div className="text-xs font-mono text-slate-400">#{booking.id}</div>
-                      {booking.timestamp && <div className="text-[10px] text-slate-400 mt-1" title="Timestamp">{booking.timestamp}</div>}
                     </td>
                     <td className="px-6 py-4">
                       <div className="font-bold text-slate-900 text-sm">{booking.name}</div>
-                      <div className="text-xs text-slate-500">{booking.email}</div>
-                      <div className="text-xs text-slate-500">{booking.phone}</div>
+                    </td>
+                    <td className="px-6 py-4 text-xs text-slate-500">
+                      {booking.email !== 'N/A' && booking.email}
+                    </td>
+                    <td className="px-6 py-4 text-xs text-slate-500 whitespace-nowrap">
+                      {booking.phone !== 'N/A' && booking.phone}
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm text-slate-700 font-medium whitespace-nowrap">{booking.date} @ {booking.time}</div>
-                      <div className="text-xs text-slate-400 truncate max-w-[200px]" title={booking.address}>{booking.address}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-xs text-slate-700 truncate max-w-[200px]" title={booking.address}>{booking.address}</div>
                       {booking.googleMapsUrl && (
                         <a href={booking.googleMapsUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-blue-500 hover:underline mt-1 inline-block">
                           <ExternalLink size={10} className="inline mr-1 -mt-0.5" />
-                          View on Maps
+                          Maps
                         </a>
                       )}
                     </td>
@@ -266,7 +274,6 @@ const Admin = () => {
                       }`}>
                         {booking.status || 'Pending'}
                       </span>
-                      {booking.booked_at && <div className="text-[10px] text-slate-400 mt-2" title="Booked At">{booking.booked_at}</div>}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
