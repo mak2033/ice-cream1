@@ -12,6 +12,8 @@ const Admin = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Fetch bookings automatically if returning to page and already logged in
   useEffect(() => {
@@ -195,6 +197,29 @@ const Admin = () => {
     );
   }
 
+  const filteredBookings = bookings.filter((booking) => {
+    let isPastEvent = false;
+    try {
+      if (booking.date !== 'N/A') {
+        const eventDateTime = new Date(`${booking.date}T${booking.time !== 'N/A' ? booking.time : '00:00:00'}`);
+        if (!isNaN(eventDateTime.getTime()) && eventDateTime < new Date()) {
+          isPastEvent = true;
+        }
+      }
+    } catch (e) {}
+
+    let matchesStatus = true;
+    if (statusFilter !== 'All') {
+      const currentStatus = isPastEvent ? 'Ended' : (booking.status || 'Pending');
+      matchesStatus = currentStatus.toLowerCase() === statusFilter.toLowerCase();
+    }
+
+    const searchString = `${booking.name} ${booking.email} ${booking.phone} ${booking.id} ${booking.address}`.toLowerCase();
+    const matchesSearch = searchString.includes(searchQuery.toLowerCase());
+
+    return matchesStatus && matchesSearch;
+  });
+
   return (
     <div className="min-h-screen bg-slate-50 flex">
       {/* Sidebar */}
@@ -243,17 +268,31 @@ const Admin = () => {
         </header>
 
         {/* Filters & Search */}
-        <div className="bg-white border-b border-slate-200 px-8 py-4 flex items-center gap-4">
-          <div className="relative flex-1 max-w-md">
+        <div className="bg-white border-b border-slate-200 px-4 md:px-8 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="relative flex-1 w-full sm:max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
             <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search bookings..."
-              className="w-full bg-slate-50 border-none rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-slate-900 outline-none"
+              className="w-full bg-slate-50 border border-slate-100 rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-slate-900 outline-none transition-all"
             />
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50">
-            <Filter size={16} /> Status: All <ChevronDown size={14} />
-          </button>
+          <div className="relative w-full sm:w-auto">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full sm:w-auto appearance-none flex items-center gap-2 px-10 py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 outline-none cursor-pointer transition-all bg-white"
+            >
+              <option value="All">Status: All</option>
+              <option value="Pending">Pending</option>
+              <option value="Confirmed">Confirmed</option>
+              <option value="Cancelled">Cancelled</option>
+              <option value="Ended">Ended</option>
+            </select>
+            <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          </div>
         </div>
 
         {/* Table Area */}
@@ -274,7 +313,7 @@ const Admin = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {bookings.map((booking) => {
+                {filteredBookings.map((booking) => {
                   // Determine if event is in the past
                   let isPastEvent = false;
                   try {
@@ -356,9 +395,9 @@ const Admin = () => {
                 })}
               </tbody>
             </table>
-            {bookings.length === 0 && !isLoading && (
+            {filteredBookings.length === 0 && !isLoading && (
               <div className="p-12 text-center">
-                <p className="text-slate-400 text-sm">No bookings found.</p>
+                <p className="text-slate-400 text-sm">No bookings found matching criteria.</p>
               </div>
             )}
           </div>
