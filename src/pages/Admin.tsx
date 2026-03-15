@@ -26,29 +26,50 @@ const Admin = () => {
   const fetchBookings = async () => {
     setIsLoading(true);
     try {
-      // Fetching from the Google Sheet CSV export (Bookings tab)
-      const sheetUrl = 'https://docs.google.com/spreadsheets/d/1Vjly0TePWjYXbztVzgO8qkaYUR3pK-C6333cM87ete4/export?format=csv&gid=1443537330';
-      const response = await fetch(sheetUrl);
-      const csvText = await response.text();
+      // Fetching from secure n8n webhook
+      const webhookUrl = 'https://home.tiffany-major.ts.net/webhook/admin-bookings';
+      const response = await fetch(webhookUrl);
       
-      const rows = csvText.split('\n').filter(row => row.trim()).slice(1);
-      const parsedBookings: Booking[] = rows.map((row, index) => {
-        // Handle CSV with potential commas in quotes
-        const cols = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
-        const cleanCols = cols.map(c => c.replace(/^"|"$/g, '').trim());
-        
-        return {
-          id: cleanCols[0] || `ID-${index}`,
-          name: cleanCols[1] || 'Unknown',
-          phone: cleanCols[2] || 'N/A',
-          date: cleanCols[3] || 'N/A',
-          time: cleanCols[4] || 'N/A',
-          address: cleanCols[5] || 'N/A',
-          guests: parseInt(cleanCols[6]) || 0,
-          status: (cleanCols[7] as any) || 'Pending',
-          booked_at: cleanCols[8] || new Date().toISOString()
+      if (!response.ok) throw new Error('Failed to fetch bookings data');
+      
+      const responseData = await response.json();
+      const rawData = Array.isArray(responseData) ? responseData : (responseData.data || []);
+      
+      const parsedBookings: Booking[] = rawData.map((row: any, index: number) => {
+        // Normalize keys to lowercase for easier matching, since n8n column names can vary
+        const normalizedRow: any = {};
+        if (row && typeof row === 'object') {
+          Object.keys(row).forEach(key => {
+            normalizedRow[key.toLowerCase().trim()] = row[key];
+          });
+        }
+
+        const getVal = (names: string[]) => {
+          for (const name of names) {
+            const n = name.toLowerCase().trim();
+            if (normalizedRow[n] !== undefined && normalizedRow[n] !== null) {
+              return normalizedRow[n];
+            }
+          }
+          return '';
         };
-      }).filter(b => b.name !== 'Unknown');
+
+        const rawGuests = getVal(['guests', 'guest count', 'number of guests']);
+        const guestsNum = parseInt(String(rawGuests), 10);
+
+        return {
+          id: String(row['#'] || getVal(['id', '#', 'booking number', 'col_1']) || `ID-${index}`).trim(),
+          name: String(getVal(['name', 'customer', 'col_2']) || 'Unknown').trim(),
+          phone: String(getVal(['phone', 'phone number', 'col_3']) || 'N/A').trim(),
+          date: String(getVal(['date', 'event date', 'col_4']) || 'N/A').trim(),
+          time: String(getVal(['time', 'event time', 'col_5']) || 'N/A').trim(),
+          address: String(getVal(['address', 'location', 'col_6']) || 'N/A').trim(),
+          guests: isNaN(guestsNum) ? 0 : guestsNum,
+          status: String(getVal(['status', 'col_7']) || 'Pending').trim() as any,
+          booked_at: String(getVal(['booked at', 'timestamp', 'created', 'col_8']) || new Date().toISOString()).trim()
+        };
+      }).filter((b: Booking) => b.name !== 'Unknown' && b.name !== 'Name'); // filter out headers or empty rows
+
       setBookings(parsedBookings);
     } catch (err) {
       console.error('Failed to fetch bookings:', err);
