@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from '@/src/components/Navbar';
 import Footer from '@/src/components/Footer';
@@ -10,12 +10,23 @@ import Admin from '@/src/pages/Admin';
 import MenuPage from '@/src/pages/Menu';
 import FloatingChat from '@/src/components/FloatingChat';
 
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+};
+
 const AppContent = () => {
   const location = useLocation();
   const isAdmin = location.pathname === '/adminjtc';
 
   return (
     <div className="min-h-screen flex flex-col font-sans selection:bg-pink-100 selection:text-pink-600">
+      <ScrollToTop />
       {!isAdmin && <Navbar />}
       <main className="flex-1">
         <Routes>
