@@ -48,7 +48,16 @@ const BookingForm = () => {
         body: JSON.stringify(bookingPayload)
       });
       
-      const data = await response.json();
+      const responseText = await response.text();
+      let data: any = {};
+      
+      try {
+        if (responseText) {
+          data = JSON.parse(responseText);
+        }
+      } catch (e) {
+        console.warn("Failed to parse JSON response:", responseText);
+      }
       
       if (data.success === true) {
         // Use the exact booking number returned by n8n
@@ -56,7 +65,7 @@ const BookingForm = () => {
         setStep(2);
       } else {
         // Handle case where webhook returned successfully but success=false
-        alert(data.message || 'Failed to submit booking. Please try again.');
+        alert(data.message || responseText || 'Failed to submit booking. Please try again.');
       }
     } catch (error: any) {
       console.error(error);
