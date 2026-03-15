@@ -4,23 +4,36 @@ import { LayoutDashboard, LogOut, Search, Download, ExternalLink, Filter, Chevro
 import { Booking } from '@/src/types';
 
 const Admin = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return localStorage.getItem('admin_logged_in') === 'true';
+  });
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Fetch bookings automatically if returning to page and already logged in
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchBookings();
+    }
+  }, [isLoggedIn]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     if (username === "alkh2044" && password === "Jtc@123456") {
+      localStorage.setItem('admin_logged_in', 'true');
       setIsLoggedIn(true);
-      // Wait a bit for the UI to transition then fetch
-      setTimeout(fetchBookings, 100);
     } else {
       setError('Invalid username or password');
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('admin_logged_in');
+    setIsLoggedIn(false);
   };
 
   const fetchBookings = async () => {
@@ -159,7 +172,7 @@ const Admin = () => {
           </button>
         </nav>
         <button
-          onClick={() => setIsLoggedIn(false)}
+          onClick={handleLogout}
           className="flex items-center gap-3 px-4 py-3 hover:text-white transition-all mt-auto"
         >
           <LogOut size={18} />
