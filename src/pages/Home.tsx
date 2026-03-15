@@ -77,7 +77,7 @@ const Home = () => {
       <Gallery />
 
       {/* Booking Status Check */}
-      <section className="py-24 px-6 bg-slate-50">
+      <section id="status" className="py-24 px-6 bg-slate-50">
         <div className="max-w-3xl mx-auto bg-white p-12 rounded-[3rem] shadow-xl border border-slate-100">
           <div className="text-center mb-10">
             <h2 className="text-3xl font-black text-slate-900 mb-2">Check Your Booking Status</h2>
