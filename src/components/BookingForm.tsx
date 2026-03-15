@@ -58,9 +58,9 @@ const BookingForm = () => {
         // Handle case where webhook returned successfully but success=false
         alert(data.message || 'Failed to submit booking. Please try again.');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert('Network error: Failed to connect to the booking system.');
+      alert(`Network error: ${error.message || 'Failed to connect'}. Please try again.`);
     } finally {
       setIsLoading(false);
     }
