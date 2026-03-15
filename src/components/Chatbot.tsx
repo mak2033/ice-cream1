@@ -41,15 +41,31 @@ const Chatbot = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: input })
       });
-      const data = await response.json();
+      
+      const responseText = await response.text();
+      let botContent = "I'm sorry, I couldn't understand that.";
+      
+      try {
+        if (responseText) {
+          const data = JSON.parse(responseText);
+          botContent = data.reply || data.message || responseText;
+        }
+      } catch (e) {
+        // If it's not valid JSON, just use the raw text returned by n8n
+        botContent = responseText || "Message received, but no reply was generated.";
+      }
       
       const botMessage: ChatMessage = { 
         role: 'bot', 
-        content: data.reply || data.message || "I'm sorry, I'm having trouble connecting right now." 
+        content: botContent 
       };
       setMessages(prev => [...prev, botMessage]);
-    } catch (error) {
-      setMessages(prev => [...prev, { role: 'bot', content: "Oops! Something went wrong. Please try again later." }]);
+    } catch (error: any) {
+      console.error('Chat error:', error);
+      setMessages(prev => [...prev, { 
+        role: 'bot', 
+        content: `Oops! Error: ${error.message || 'Connection failed'}. Check console for details.` 
+      }]);
     } finally {
       setIsLoading(false);
     }
