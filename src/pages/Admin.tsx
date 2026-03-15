@@ -214,7 +214,7 @@ const Admin = () => {
       matchesStatus = currentStatus.toLowerCase() === statusFilter.toLowerCase();
     }
 
-    const searchString = `${booking.name} ${booking.email} ${booking.phone} ${booking.id} ${booking.address}`.toLowerCase();
+    const searchString = `${booking.name} ${booking.email} ${booking.phone} ${booking.id}`.toLowerCase();
     const matchesSearch = searchString.includes(searchQuery.toLowerCase());
 
     return matchesStatus && matchesSearch;
