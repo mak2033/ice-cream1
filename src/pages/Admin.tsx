@@ -72,14 +72,17 @@ const Admin = () => {
 
         return {
           id: String(row['#'] || getVal(['id', '#', 'booking number', 'col_1']) || `ID-${index}`).trim(),
+          timestamp: String(getVal(['timestamp', 'time']) || '').trim(),
           name: String(getVal(['name', 'customer', 'col_2']) || 'Unknown').trim(),
+          email: String(getVal(['email', 'mail']) || 'N/A').trim(),
           phone: String(getVal(['phone', 'phone number', 'col_3']) || 'N/A').trim(),
-          date: String(getVal(['date', 'event date', 'col_4']) || 'N/A').trim(),
-          time: String(getVal(['time', 'event time', 'col_5']) || 'N/A').trim(),
+          date: String(getVal(['event date', 'date', 'col_4']) || 'N/A').trim(),
+          time: String(getVal(['event time', 'time', 'col_5']) || 'N/A').trim(),
           address: String(getVal(['address', 'location', 'col_6']) || 'N/A').trim(),
           guests: isNaN(guestsNum) ? 0 : guestsNum,
-          status: String(getVal(['status', 'col_7']) || 'Pending').trim() as any,
-          booked_at: String(getVal(['booked at', 'timestamp', 'created', 'col_8']) || new Date().toISOString()).trim()
+          googleMapsUrl: String(getVal(['google maps url', 'google map link', 'map url']) || '').trim(),
+          booked_at: String(getVal(['booked at', 'created', 'col_8']) || '').trim(),
+          status: String(getVal(['status', 'col_7']) || 'Pending').trim() as any
         };
       }).filter((b: Booking) => b.name !== 'Unknown' && b.name !== 'Name'); // filter out headers or empty rows
 
@@ -92,8 +95,8 @@ const Admin = () => {
   };
 
   const exportToCSV = () => {
-    const header = ['ID', 'Name', 'Phone', 'Date', 'Time', 'Address', 'Guests', 'Status', 'Booked At'];
-    const rows = bookings.map(b => [b.id, b.name, b.phone, b.date, b.time, b.address, b.guests, b.status, b.booked_at]);
+    const header = ['#', 'Timestamp', 'Name', 'Email', 'Phone', 'Event Date', 'Event Time', 'Address', 'Guests', 'Google Maps URL', 'Booked At', 'Status'];
+    const rows = bookings.map(b => [b.id, b.timestamp, b.name, b.email, b.phone, b.date, b.time, b.address, b.guests, b.googleMapsUrl, b.booked_at, b.status]);
     const csvContent = [header, ...rows].map(e => e.join(",")).join("\n");
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
@@ -224,9 +227,9 @@ const Admin = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200">
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">ID</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Customer</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Event Details</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">ID / Created</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Customer Contact</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Event Info</th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Guests</th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
@@ -235,24 +238,35 @@ const Admin = () => {
               <tbody className="divide-y divide-slate-100">
                 {bookings.map((booking) => (
                   <tr key={booking.id} className="hover:bg-slate-50 transition-all">
-                    <td className="px-6 py-4 text-xs font-mono text-slate-400">#{booking.id}</td>
+                    <td className="px-6 py-4">
+                      <div className="text-xs font-mono text-slate-400">#{booking.id}</div>
+                      {booking.timestamp && <div className="text-[10px] text-slate-400 mt-1" title="Timestamp">{booking.timestamp}</div>}
+                    </td>
                     <td className="px-6 py-4">
                       <div className="font-bold text-slate-900 text-sm">{booking.name}</div>
+                      <div className="text-xs text-slate-500">{booking.email}</div>
                       <div className="text-xs text-slate-500">{booking.phone}</div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm text-slate-700 font-medium">{booking.date} at {booking.time}</div>
-                      <div className="text-xs text-slate-400 truncate max-w-[200px]">{booking.address}</div>
+                      <div className="text-sm text-slate-700 font-medium whitespace-nowrap">{booking.date} @ {booking.time}</div>
+                      <div className="text-xs text-slate-400 truncate max-w-[200px]" title={booking.address}>{booking.address}</div>
+                      {booking.googleMapsUrl && (
+                        <a href={booking.googleMapsUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-blue-500 hover:underline mt-1 inline-block">
+                          <ExternalLink size={10} className="inline mr-1 -mt-0.5" />
+                          View on Maps
+                        </a>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-600 font-medium">{booking.guests}</td>
                     <td className="px-6 py-4">
                       <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                        booking.status === 'Confirmed' ? 'bg-emerald-100 text-emerald-600' :
-                        booking.status === 'Cancelled' ? 'bg-red-100 text-red-600' :
+                        String(booking.status || '').toLowerCase() === 'confirmed' ? 'bg-emerald-100 text-emerald-600' :
+                        String(booking.status || '').toLowerCase() === 'cancelled' ? 'bg-red-100 text-red-600' :
                         'bg-amber-100 text-amber-600'
                       }`}>
-                        {booking.status}
+                        {booking.status || 'Pending'}
                       </span>
+                      {booking.booked_at && <div className="text-[10px] text-slate-400 mt-2" title="Booked At">{booking.booked_at}</div>}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
