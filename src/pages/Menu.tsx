@@ -74,8 +74,11 @@ const MenuPage = () => {
           const nameRaw = row['col_2'] || getVal(['product name', 'name', 'col_2']);
           const priceRaw = row['col_3'] || getVal(['price', 'price (usd)', 'col_3']);
           
-          const firstColStr = String(firstColRaw).trim();
-          const nameStr = String(nameRaw).trim();
+          const firstColStr = String(firstColRaw || '').trim();
+          const nameStr = String(nameRaw || '').trim();
+          
+          // DEBUG
+          console.log(`Row index: ${index}, nameStr: "${nameStr}", firstColStr: "${firstColStr}"`);
           
           // Detect Category Row: The first column has text, but the name and price columns are completely empty
           if (firstColStr && firstColStr !== "Total: 24 products" && !nameStr && !priceRaw) {
