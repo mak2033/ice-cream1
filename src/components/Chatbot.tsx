@@ -7,15 +7,15 @@ import { v4 as uuidv4 } from 'uuid';
 
 const Chatbot = () => {
   const [sessionId] = useState(() => {
-    const savedId = localStorage.getItem('sweetbot_session');
+    const savedId = sessionStorage.getItem('sweetbot_session');
     if (savedId) return savedId;
     const newId = uuidv4();
-    localStorage.setItem('sweetbot_session', newId);
+    sessionStorage.setItem('sweetbot_session', newId);
     return newId;
   });
   
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
-    const saved = localStorage.getItem('sweetbot_history');
+    const saved = sessionStorage.getItem('sweetbot_history');
     return saved ? JSON.parse(saved) : [
       { role: 'bot', content: "Hi! I'm SweetBot 🍦. How can I help you today?" }
     ];
@@ -25,7 +25,7 @@ const Chatbot = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    localStorage.setItem('sweetbot_history', JSON.stringify(messages));
+    sessionStorage.setItem('sweetbot_history', JSON.stringify(messages));
   }, [messages]);
 
   const scrollToBottom = () => {
