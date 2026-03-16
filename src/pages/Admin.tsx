@@ -170,7 +170,7 @@ const Admin = () => {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-slate-900 outline-none transition-all"
-                placeholder="alkh2044"
+                placeholder="Enter username"
               />
             </div>
             <div className="space-y-2">
