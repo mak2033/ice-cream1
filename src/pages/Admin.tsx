@@ -14,6 +14,10 @@ const Admin = () => {
   const [error, setError] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const [strikeData, setStrikeData] = useState(() => {
+    const data = localStorage.getItem('admin_login_strikes');
+    return data ? JSON.parse(data) : { strikes: 0, lockUntil: null };
+  });
 
   // Fetch bookings automatically if returning to page and already logged in
   useEffect(() => {
@@ -60,11 +64,49 @@ const Admin = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    
+    // Check if locked
+    if (strikeData.lockUntil) {
+      const remainingMs = strikeData.lockUntil - new Date().getTime();
+      if (remainingMs > 0) {
+        if (strikeData.strikes >= 9) {
+          setError('Access denied (IP logged). Contact support.');
+        } else {
+          const remainingMinutes = Math.ceil(remainingMs / 60000);
+          setError(`Too many failed attempts. Try again in ${remainingMinutes} minute(s).`);
+        }
+        return;
+      }
+    }
+
     if (username === "alkh2044" && password === "Jtc@123456") {
       localStorage.setItem('admin_logged_in', 'true');
+      localStorage.removeItem('admin_login_strikes');
+      setStrikeData({ strikes: 0, lockUntil: null });
       setIsLoggedIn(true);
     } else {
-      setError('Invalid username or password');
+      const newStrikes = strikeData.strikes + 1;
+      let newLockUntil = null;
+      let localError = 'Invalid username or password.';
+      
+      if (newStrikes >= 9) {
+        newLockUntil = new Date().getTime() + (365 * 24 * 60 * 60 * 1000); // 1 year
+        localError = 'Access denied (IP logged). Contact support.';
+      } else if (newStrikes === 6) {
+        newLockUntil = new Date().getTime() + (5 * 60 * 1000); // 5 mins
+        localError = 'Too many failed attempts. Try again in 5 minutes.';
+      } else if (newStrikes === 3) {
+        newLockUntil = new Date().getTime() + (1 * 60 * 1000); // 1 min
+        localError = 'Too many failed attempts. Try again in 1 minute.';
+      } else {
+        const attemptsLeft = (newStrikes < 3) ? (3 - newStrikes) : (newStrikes < 6 ? (6 - newStrikes) : (9 - newStrikes));
+        localError = `Invalid username or password. ${attemptsLeft} attempt(s) left.`;
+      }
+
+      const newData = { strikes: newStrikes, lockUntil: newLockUntil || null };
+      setStrikeData(newData);
+      localStorage.setItem('admin_login_strikes', JSON.stringify(newData));
+      setError(localError);
     }
   };
 
