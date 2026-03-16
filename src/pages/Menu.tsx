@@ -177,12 +177,15 @@ const MenuPage = () => {
                         onClick={() => setSelectedImage(item.url || ASSETS.placeholder_treat)}
                       >
                         <img
-                          src={item.url ? `https://images.weserv.nl/?url=${encodeURIComponent(item.url)}` : ASSETS.placeholder_treat}
+                          src={item.url || ASSETS.placeholder_treat}
                           alt={item.name}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                           referrerPolicy="no-referrer"
                           onError={(e) => {
-                            (e.target as HTMLImageElement).src = ASSETS.placeholder_treat;
+                            const target = e.target as HTMLImageElement;
+                            if (target.src !== ASSETS.placeholder_treat) {
+                              target.src = ASSETS.placeholder_treat;
+                            }
                           }}
                         />
                         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -239,10 +242,16 @@ const MenuPage = () => {
                 <X size={24} />
               </button>
               <img
-                src={selectedImage ? `https://images.weserv.nl/?url=${encodeURIComponent(selectedImage)}` : ASSETS.placeholder_treat}
+                src={selectedImage || ASSETS.placeholder_treat}
                 alt="Selected item"
                 className="w-full h-auto max-h-[80vh] object-contain bg-slate-50"
                 referrerPolicy="no-referrer"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  if (target.src !== ASSETS.placeholder_treat) {
+                    target.src = ASSETS.placeholder_treat;
+                  }
+                }}
               />
             </motion.div>
           </motion.div>

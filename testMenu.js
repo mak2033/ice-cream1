@@ -33,8 +33,9 @@ async function run() {
     
     const firstColStr = String(firstColRaw || '').trim();
     const nameStr = String(nameRaw || '').trim();
+    const urlRaw = row['col_5'] || getVal(['image url', 'url', 'image', 'col_5']);
     
-    console.log(`Row index: ${index}, nameStr: "${nameStr}", firstColStr: "${firstColStr}", rawPrice: "${priceRaw}"`);
+    console.log(`Row index: ${index}, nameStr: "${nameStr}", firstColStr: "${firstColStr}", rawPrice: "${priceRaw}", url: "${urlRaw}"`);
     
     if (firstColStr && firstColStr !== "Total: 24 products" && !nameStr && (!priceRaw || String(priceRaw).trim() === '')) {
       currentCategory = firstColStr;
@@ -43,7 +44,7 @@ async function run() {
     
     if (!nameStr || nameStr === 'Product Name' || nameStr === 'undefined') return;
     
-    parsedItems.push({ name: nameStr, category: currentCategory });
+    parsedItems.push({ name: nameStr, category: currentCategory, url: urlRaw });
   });
   
   console.log(`Successfully parsed: ${parsedItems.length}`);
