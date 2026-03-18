@@ -9,8 +9,16 @@ export interface Booking {
   address: string;
   guests: number;
   googleMapsUrl: string;
+  price: number;
   status: 'Pending' | 'Confirmed' | 'Cancelled';
   booked_at: string;
+}
+
+export interface PricingTier {
+  id: string;
+  minGuests: number;
+  maxGuests: number;
+  price: number;
 }
 
 export interface ChatMessage {

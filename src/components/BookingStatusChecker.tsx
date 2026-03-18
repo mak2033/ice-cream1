@@ -25,8 +25,17 @@ const BookingStatusChecker = () => {
 
       const data = await response.json();
 
-      if (data && data.found) {
+      // Handle both our custom JSON response AND raw n8n Google Sheets row response
+      if (data && data.found && data.booking) {
         setBookingData(data.booking);
+      } else if (data && data.ID) { // Raw Google Sheets row returned directly from Find Booking node
+        setBookingData({
+          status: data.Status || 'Pending',
+          price: data.Price,
+          date: data['Event Date'] || data.date,
+          time: data['Event Time'] || data.time,
+          guests: data.Guests || data.guests,
+        });
       } else {
         setError('Booking number not found. Please check and try again.');
       }
